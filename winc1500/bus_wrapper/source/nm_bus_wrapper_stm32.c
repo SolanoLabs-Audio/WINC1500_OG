@@ -80,17 +80,15 @@ tstrNmBusCapabilities egstrNmBusCapabilities =
 *	@brief	Select slave chip select: true - select, false - deselect
 *	@return	None
 */
-static void spi_select_slave(const uint8_t select)
-{
+static void
+spi_select_slave(const uint8_t select){
+
     if (select)
-    {
-        HAL_GPIO_WritePin(SPI_WIFI_CS_GPIO_PORT,SPI_WIFI_CS_PIN,GPIO_PIN_RESET);
-    }
+    	{HAL_GPIO_WritePin(SPI_WIFI_CS_GPIO_PORT,SPI_WIFI_CS_PIN,GPIO_PIN_RESET);}
     else
-    {
-        HAL_GPIO_WritePin(SPI_WIFI_CS_GPIO_PORT,SPI_WIFI_CS_PIN,GPIO_PIN_SET);
-    }
+    	{HAL_GPIO_WritePin(SPI_WIFI_CS_GPIO_PORT,SPI_WIFI_CS_PIN,GPIO_PIN_SET);}
 }
+//
 
 /*
 *	@fn		spi_rw
@@ -196,33 +194,39 @@ static sint8 spi_rw(uint8* pu8Mosi, uint8* pu8Miso, uint16 u16Sz)
 #endif
 #endif //CONF_WINC_USE_SPI
 
-void nm_bus_wifi_spi_init(SPI_HandleTypeDef *hspi)
-{
-    GPIO_InitTypeDef  GPIO_InitStruct;
+void
+nm_bus_wifi_spi_init(SPI_HandleTypeDef *hspi){
+
+    GPIO_InitTypeDef  GPIO_InitStruct={0};
 
     /* Peripheral clock enable */
     SPI_WIFI_CLK_ENABLE();
+    CONF_WINC_CLOCK_CS_ENABLE();
 
     /* Configure GPIO pin : PA4 - we are using ST GPIO definitions for winc1500 */
-    GPIO_InitStruct.Pin   = SPI_WIFI_CS_PIN;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-    GPIO_InitStruct.Alternate = 0;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Mode=GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull=GPIO_PULLUP;
+    GPIO_InitStruct.Speed=GPIO_SPEED_HIGH;
+
+    GPIO_InitStruct.Pin=SPI_WIFI_CS_PIN;
+    HAL_GPIO_Init(SPI_WIFI_CS_GPIO_PORT,&GPIO_InitStruct);
     HAL_GPIO_WritePin(SPI_WIFI_CS_GPIO_PORT,SPI_WIFI_CS_PIN,GPIO_PIN_SET);
 
-    /**SPIx GPIO Configuration
-    PB3     ------> SPI_WIFI_SCK
-    PB4     ------> SPI_WIFI_MISO
-    PB5     ------> SPI_WIFI_MOSI
-    */
-    GPIO_InitStruct.Pin = SPI_WIFI_SCK_PIN|SPI_WIFI_MISO_PIN|SPI_WIFI_MOSI_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
-   GPIO_InitStruct.Alternate = SPI3_WIFI_AF;
-    HAL_GPIO_Init(SPI_WIFI_MOSI_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Mode=GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull=GPIO_PULLDOWN;
+    GPIO_InitStruct.Speed=GPIO_SPEED_HIGH;
+   	GPIO_InitStruct.Alternate=SPI3_WIFI_AF;
+
+   	GPIO_InitStruct.Pin=SPI_WIFI_SCK_PIN;
+    HAL_GPIO_Init(SPI_WIFI_SCK_GPIO_PORT,&GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin=SPI_WIFI_MISO_PIN;
+    HAL_GPIO_Init(SPI_WIFI_MISO_GPIO_PORT,&GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin=SPI_WIFI_MOSI_PIN;
+    HAL_GPIO_Init(SPI_WIFI_MOSI_GPIO_PORT,&GPIO_InitStruct);
 }
 
 
@@ -231,11 +235,21 @@ void nm_bus_wifi_spi_init(SPI_HandleTypeDef *hspi)
 *	@brief	Initialize the bus wrapper
 *	@return	M2M_SUCCESS in case of success and M2M_ERR_BUS_FAIL in case of failure
 */
-sint8 nm_bus_init(void *pvinit)
-{
+sint8
+nm_bus_init(void *pvinit){
+
 	sint8 result = M2M_SUCCESS;
 
-	 /* WiFi SPI init function - called from nm_bus_init() */
+	#ifdef __STM32H7__
+		RCC_PeriphCLKInitTypeDef PeriphClkInitStruct={0};
+		PeriphClkInitStruct.PeriphClockSelection=RCC_PERIPHCLK_SPI1;
+		PeriphClkInitStruct.Spi123ClockSelection=RCC_SPI123CLKSOURCE_PLL;
+
+		if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct)!=HAL_OK)
+			{Error_Handler();}
+	#endif
+
+	SPI_WIFI_CLK_ENABLE();
 
 	hspiWifi.Instance=SPI_WIFI;
 	hspiWifi.Init.Mode=SPI_MODE_MASTER;
@@ -244,7 +258,9 @@ sint8 nm_bus_init(void *pvinit)
 	hspiWifi.Init.CLKPolarity=SPI_POLARITY_LOW;
 	hspiWifi.Init.CLKPhase=SPI_PHASE_1EDGE;
 	hspiWifi.Init.NSS=SPI_NSS_SOFT;
-	hspiWifi.Init.BaudRatePrescaler=SPI_BAUDRATEPRESCALER_64;
+	#ifdef __STM32H7__
+		hspiWifi.Init.BaudRatePrescaler=SPI_BAUDRATEPRESCALER_32;
+	#endif
 	hspiWifi.Init.FirstBit=SPI_FIRSTBIT_MSB;
 	hspiWifi.Init.TIMode=SPI_TIMODE_DISABLE;
 	hspiWifi.Init.CRCCalculation= SPI_CRCCALCULATION_DISABLE;

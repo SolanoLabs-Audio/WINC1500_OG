@@ -47,74 +47,86 @@
 extern "C" {
 #endif
 
-#ifdef __STM32H7__
-	#include "stm32H7xx_hal.h"
-	#include "stm32H7xx_hal_spi.h"
-#endif
+	#ifdef __STM32H7__
+		#include "stm32H7xx_hal.h"
+		#include "stm32H7xx_hal_spi.h"
+	#endif
 
-#ifdef __STM32F4__
-	#include "stm32f4xx_hal.h"
-	#include "stm32f4xx_hal_spi.h"
-#endif
+	#ifdef __STM32F4__
+		#include "stm32f4xx_hal.h"
+		#include "stm32f4xx_hal_spi.h"
+	#endif
 
-/*
-   ---------------------------------
-   ---------- PIN settings ---------
-   ---------------------------------
-*/
-/* Add extenal definition for spi handler variable, to communicate with winc1500 SPI */
-extern SPI_HandleTypeDef hspiWifi;
-
-#define CONF_WINC_PIN_RESET				    GPIO_PIN_2  /* Port G */
-#define CONF_WINC_PIN_CHIP_ENABLE		    GPIO_PIN_3 /* Port G */
-#define CONF_WINC_PIN_WAKE				    GPIO_PIN_13  /* Port B */
-#define CONF_WINC_PIN_POWER_ENABLE          GPIO_PIN_10 /* Port A */
-#define CONF_WINC_PIN_LEVEL_SHIFTER_ENABLE  GPIO_PIN_6  /* Port B */
-#define CONF_WINC_PORT_LEVEL_SHIFTER_ENABLE GPIOB       /* Port B */
+	/*
+	   ---------------------------------
+	   ---------- PIN settings ---------
+	   ---------------------------------
+	*/
+	/* Add extenal definition for spi handler variable, to communicate with winc1500 SPI */
+	extern SPI_HandleTypeDef hspiWifi;
 
 
-/*
-   ---------------------------------
-   ---------- SPI settings ---------
-   ---------------------------------
-*/
+	#define CONF_WINC_CLOCK_CHIP_ENABLE()		__GPIOG_CLK_ENABLE()
+	#define CONF_WINC_PORT_CHIP_ENABLE			GPIOG
+	#define CONF_WINC_PIN_CHIP_ENABLE		    GPIO_PIN_3
 
-#define CONF_WINC_USE_SPI				    (1)
+	#define CONF_WINC_CLOCK_WAKE_ENABLE()		__GPIOF_CLK_ENABLE()
+	#define CONF_WINC_PORT_WAKE					GPIOF
+	#define CONF_WINC_PIN_WAKE				    GPIO_PIN_11
 
-/** SPI pin and instance settings. */
-    /* User can use this section to tailor SPIx instance used and associated
-       resources */
-    /* Definition for SPI_WINC1500 == SPI3, clock resources */
-#   define SPI_WIFI                             SPI1
-#   define SPI_WIFI_CLK_ENABLE()                __HAL_RCC_SPI1_CLK_ENABLE()
-#   define SPI_WIFI_CS_GPIO_CLK_ENABLE()        __HAL_RCC_GPIOA_CLK_ENABLE()
-#   define SPI_WIFI_SCK_GPIO_CLK_ENABLE()       __HAL_RCC_GPIOA_CLK_ENABLE()
-#   define SPI_WIFI_MISO_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
-#   define SPI_WIFI_MOSI_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
+	#define CONF_WINC_CLOCK_RESET_ENABLE()		__GPIOG_CLK_ENABLE()
+	#define CONF_WINC_PORT_RESET				GPIOG
+	#define CONF_WINC_PIN_RESET				    GPIO_PIN_2
 
-#   define SPI_WIFI_FORCE_RESET()               __HAL_RCC_SPI1_FORCE_RESET()
-#   define SPI_WIFI_RELEASE_RESET()             __HAL_RCC_SPI1_RELEASE_RESET()
-
-/* Definition for SPI3 Pins */
-#   define SPI_WIFI_CS_PIN                      GPIO_PIN_4 
-#   define SPI_WIFI_CS_GPIO_PORT                GPIOA
-#   define SPI_WIFI_SCK_PIN                     GPIO_PIN_5
-#   define SPI_WIFI_SCK_GPIO_PORT               GPIOA
-#   define SPI_WIFI_MISO_PIN                    GPIO_PIN_6
-#   define SPI_WIFI_MISO_GPIO_PORT              GPIOA
-#   define SPI_WIFI_MOSI_PIN                    GPIO_PIN_7
-#   define SPI_WIFI_MOSI_GPIO_PORT              GPIOA
-#   define SPI3_WIFI_AF                         GPIO_AF5_SPI1
-
-/** WiFi interrupt pin. */
-/* Add WiFi Interrupt pin: ST interrupt pin definition */
-#   define CONF_WINC_SPI_INT_PIN                GPIO_PIN_12      /* Port B */
+	#define CONF_WINC_CLOCK_CS_ENABLE()			__GPIOD_CLK_ENABLE()
+	#define SPI_WIFI_CS_PIN                     GPIO_PIN_14
+	#define SPI_WIFI_CS_GPIO_PORT               GPIOD
 
 
-#   define CONF_WINC_EXTI_IRQN                  EXTI3_IRQn
+	//#define CONF_WINC_PIN_POWER_ENABLE          GPIO_PIN_10
+	//#define CONF_WINC_PIN_LEVEL_SHIFTER_ENABLE  GPIO_PIN_6
+	//#define CONF_WINC_PORT_LEVEL_SHIFTER_ENABLE GPIOB
 
-/** SPI clock. */
-#define CONF_WINC_SPI_CLOCK				        (12500000)
+	#define SPI_WIFI_FORCE_RESET()               __HAL_RCC_SPI1_FORCE_RESET()
+	#define SPI_WIFI_RELEASE_RESET()             __HAL_RCC_SPI1_RELEASE_RESET()
+
+	//WiFi interrupt pin. */
+	//Add WiFi Interrupt pin: ST interrupt pin definition
+	#define CONF_WINC_SPI_INT_PIN                GPIO_PIN_3
+	#define CONF_WINC_SPI_INT_PORT               GPIOF
+	#define CONF_WINC_EXTI_IRQN                  EXTI3_IRQn
+
+
+
+	#define CONF_WINC_USE_SPI				    (1)
+
+	/** SPI pin and instance settings. */
+		/* User can use this section to tailor SPIx instance used and associated
+		   resources */
+		/* Definition for SPI_WINC1500 == SPI3, clock resources */
+	#define SPI_WIFI                             SPI1
+	#define SPI_WIFI_CLK_ENABLE()                __HAL_RCC_SPI1_CLK_ENABLE()
+	#define SPI_WIFI_CS_GPIO_CLK_ENABLE()        __HAL_RCC_GPIOA_CLK_ENABLE()
+	#define SPI_WIFI_SCK_GPIO_CLK_ENABLE()       __HAL_RCC_GPIOA_CLK_ENABLE()
+	#define SPI_WIFI_MISO_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
+	#define SPI_WIFI_MOSI_GPIO_CLK_ENABLE()      __HAL_RCC_GPIOA_CLK_ENABLE()
+
+
+	/* Definition for SPI3 Pins */
+	#define SPI_WIFI_SCK_PIN                     GPIO_PIN_5
+	#define SPI_WIFI_SCK_GPIO_PORT               GPIOA
+
+	#define SPI_WIFI_MISO_PIN                    GPIO_PIN_6
+	#define SPI_WIFI_MISO_GPIO_PORT              GPIOA
+
+	#define SPI_WIFI_MOSI_PIN                    GPIO_PIN_7
+	#define SPI_WIFI_MOSI_GPIO_PORT              GPIOA
+
+
+	#define SPI3_WIFI_AF                         GPIO_AF5_SPI1
+
+	/** SPI clock. */
+	#define CONF_WINC_SPI_CLOCK				    (12500000)
 
 /*
    ---------------------------------

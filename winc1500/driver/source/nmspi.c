@@ -1170,7 +1170,7 @@ _FAIL_:
 
 ********************************************/
 
-static void spi_init_pkt_sz(void)
+void spi_init_pkt_sz(void)
 {
 	uint32 val32;
 

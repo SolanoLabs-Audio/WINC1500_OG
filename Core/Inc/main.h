@@ -87,6 +87,8 @@ void Error_Handler(void);
 #define IRQ_Pin_Pin GPIO_PIN_3
 #define IRQ_Pin_GPIO_Port GPIOF
 #define IRQ_Pin_EXTI_IRQn EXTI3_IRQn
+#define WAKE_Pin_Pin GPIO_PIN_11
+#define WAKE_Pin_GPIO_Port GPIOF
 #define CS_Pin_Pin GPIO_PIN_14
 #define CS_Pin_GPIO_Port GPIOD
 #define RESET_Pin_Pin GPIO_PIN_2
