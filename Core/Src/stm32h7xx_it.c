@@ -22,13 +22,11 @@
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "nm_bsp_stm32_LLD.h"
-
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+#include "conf_winc.h"
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -214,7 +212,13 @@ void EXTI3_IRQHandler(void)
   /* USER CODE END EXTI3_IRQn 0 */
 
   /* USER CODE BEGIN EXTI3_IRQn 1 */
-	HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+    uint16_t GPIO_Pin;
+
+    /* Get GPIO_Pin */
+    if(__HAL_GPIO_EXTI_GET_IT(CONF_WINC_SPI_INT_PIN))
+    	{GPIO_Pin = CONF_WINC_SPI_INT_PIN;}
+
+    HAL_GPIO_EXTI_IRQHandler(GPIO_Pin);
   /* USER CODE END EXTI3_IRQn 1 */
 }
 
@@ -275,20 +279,5 @@ void TIM6_DAC_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
-/**
-  * @brief  GPIO EXTI callback.
-  * @param  GPIO_Pin: Specifies the pin connected to the EXTI line.
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-  /* USER CODE BEGIN HAL_GPIO_EXTI_Callback 0 */
-
-  /* AGGIUNGA QUESTA RIGA: */
-  WINC_LLD_ExtiCallback(GPIO_Pin);
-
-  /* USER CODE END HAL_GPIO_EXTI_Callback 0 */
-}
 
 /* USER CODE END 1 */

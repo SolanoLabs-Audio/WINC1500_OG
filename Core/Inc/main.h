@@ -31,6 +31,12 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#ifdef __STM32F4__
+
+#endif
+#include "stdio.h"
+#include "m2m_types.h"
+
 
 /* USER CODE END Includes */
 
@@ -53,6 +59,27 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+
+/* Exported macro ------------------------------------------------------------*/
+
+/** Security mode */
+#define USE_WEP					 (0) /*< Set to (1) to use WEP, and (0) to use OPEN */
+
+/** AP mode Settings */
+#define MAIN_WLAN_SSID           "DEMO_AP" /* < SSID */
+#if USE_WEP
+#define MAIN_WLAN_AUTH           M2M_WIFI_SEC_WEP /* < Security manner */
+#define MAIN_WLAN_WEP_KEY        "1234567890" /* < Security Key in WEP Mode */
+#define MAIN_WLAN_WEP_KEY_INDEX  (0)
+#else
+#define MAIN_WLAN_AUTH           M2M_WIFI_SEC_OPEN /* < Security manner */
+#endif
+#define MAIN_WLAN_CHANNEL        (6) /* < Channel number */
+
+
+#ifndef NULL
+#define NULL   ((void *) 0)
+#endif
 
 /* USER CODE END EFP */
 

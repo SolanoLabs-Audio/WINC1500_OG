@@ -26,7 +26,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
+#include <string.h>
+#include "m2m_wifi.h"
+#include "conf_winc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,6 +62,74 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#ifdef __GNUC__
+/* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
+   set to 'Yes') calls __io_putchar() */
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+extern void isr(void);
+
+
+
+/**
+  * @brief  EXTI line detection callback.
+  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
+  * @retval None
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+
+	if(GPIO_Pin==CONF_WINC_SPI_INT_PIN)
+    	{isr();}
+}
+//
+
+
+
+
+
+/**
+ * \brief Callback to get the Wi-Fi status update.
+ *
+ * \param[in] u8MsgType type of Wi-Fi notification. Possible types are:
+ *  - [M2M_WIFI_RESP_CON_STATE_CHANGED](@ref M2M_WIFI_RESP_CON_STATE_CHANGED)
+ *  - [M2M_WIFI_REQ_DHCP_CONF](@ref M2M_WIFI_REQ_DHCP_CONF)
+ * \param[in] pvMsg A pointer to a buffer containing the notification parameters
+ * (if any). It should be casted to the correct data type corresponding to the
+ * notification type.
+ */
+static void wifi_cb(uint8_t u8MsgType, void *pvMsg)
+{
+	switch (u8MsgType) {
+	case M2M_WIFI_RESP_CON_STATE_CHANGED:
+	{
+		tstrM2mWifiStateChanged *pstrWifiState = (tstrM2mWifiStateChanged *)pvMsg;
+		if (pstrWifiState->u8CurrState == M2M_WIFI_CONNECTED) {
+		} else if (pstrWifiState->u8CurrState == M2M_WIFI_DISCONNECTED) {
+			printf("Station disconnected\r\n");
+		}
+
+		break;
+	}
+
+	case M2M_WIFI_REQ_DHCP_CONF:
+	{
+		uint8_t *pu8IPAddress = (uint8_t *)pvMsg;
+		printf("Station connected\r\n");
+		printf("Station IP is %u.%u.%u.%u\r\n",
+				pu8IPAddress[0], pu8IPAddress[1], pu8IPAddress[2], pu8IPAddress[3]);
+		break;
+	}
+
+	default:
+	{
+		break;
+	}
+	}
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -70,7 +141,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+	tstrWifiInitParam param;
+	tstrM2MAPConfig strM2MAPConfig;
+	int8_t ret;
   /* USER CODE END 1 */
 
   /* MPU Configuration--------------------------------------------------------*/
@@ -104,6 +177,56 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
+
+  /* Initialize the BSP. */
+  nm_bsp_init();
+
+  /* Initialize Wi-Fi parameters structure. */
+  memset((uint8_t *)&param, 0, sizeof(tstrWifiInitParam));
+
+  /* Initialize Wi-Fi driver with data and status callbacks. */
+  param.pfAppWifiCb = wifi_cb;
+  ret = m2m_wifi_init(&param);
+  if (M2M_SUCCESS != ret) {
+	  printf("main: m2m_wifi_init call error!(%d)\r\n", ret);
+	  while (1) {
+	  }
+  }
+
+	/* Initialize AP mode parameters structure with SSID, channel and OPEN security type. */
+	memset(&strM2MAPConfig, 0x00, sizeof(tstrM2MAPConfig));
+	strcpy((char *)&strM2MAPConfig.au8SSID, MAIN_WLAN_SSID);
+	strM2MAPConfig.u8ListenChannel = MAIN_WLAN_CHANNEL;
+	strM2MAPConfig.u8SecType = MAIN_WLAN_AUTH;
+
+	strM2MAPConfig.au8DHCPServerIP[0] = 192;
+	strM2MAPConfig.au8DHCPServerIP[1] = 168;
+	strM2MAPConfig.au8DHCPServerIP[2] = 1;
+	strM2MAPConfig.au8DHCPServerIP[3] = 1;
+
+#if USE_WEP
+	strcpy((char *)&strM2MAPConfig.au8WepKey, MAIN_WLAN_WEP_KEY);
+	strM2MAPConfig.u8KeySz = strlen(MAIN_WLAN_WEP_KEY);
+	strM2MAPConfig.u8KeyIndx = MAIN_WLAN_WEP_KEY_INDEX;
+#endif
+
+	/* Bring up AP mode with parameters structure. */
+	ret = m2m_wifi_enable_ap(&strM2MAPConfig);
+	if (M2M_SUCCESS != ret) {
+		printf("main: m2m_wifi_enable_ap call error!\r\n");
+		while (1) {
+		}
+	}
+
+	printf("AP mode started. You can connect to %s.\r\n", (char *)MAIN_WLAN_SSID);
+  while(1)
+  {
+	  m2m_wifi_handle_events(NULL);
+
+  }
+
+#if 0
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,6 +237,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
   }
+#endif
   /* USER CODE END 3 */
 }
 
