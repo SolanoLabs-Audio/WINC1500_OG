@@ -48,7 +48,8 @@
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_hal_spi.h"
 #include "bsp/inc/nm_bsp.h"
-#include "common/inc/nm_common.h"
+
+#include "../../Core/inc/nm_common.h"
 #include "conf_winc.h"
 
 #define NM_BUS_MAX_TRX_SZ	256

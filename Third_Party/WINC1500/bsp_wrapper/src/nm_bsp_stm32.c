@@ -12,8 +12,8 @@
 #include "nm_bsp_stm32.h"
 #include "nm_bsp_stm32_LLD.h"
 
+#include "../../Core/inc/nm_common.h"
 /* Header standard del WINC (devono essere nel path di include) */
-#include "common/inc/nm_common.h"
 #include "bus_wrapper/inc/nm_bus_wrapper.h"
 
 /*

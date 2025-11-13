@@ -43,7 +43,7 @@
 #ifndef _NM_BUS_WRAPPER_H_
 #define _NM_BUS_WRAPPER_H_
 
-#include "common/inc/nm_common.h"
+#include "../../Core/inc/nm_common.h"
 
 /**
 	BUS Type

@@ -42,7 +42,7 @@
 
 #include "../inc/nm_bsp.h"
 
-#include "../../common/inc/nm_common.h"
+#include "../../Core/inc/nm_common.h"
 #include "stm32f4xx_hal.h"
 //#include "cmsis_os.h"
 #include "conf_winc.h"
