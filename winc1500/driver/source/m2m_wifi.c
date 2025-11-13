@@ -148,7 +148,7 @@ static void m2m_wifi_cb(uint8 u8OpCode, uint16 u16DataSize, uint32 u32Addr)
 		uint32  u32ConflictedIP;
 		if(hif_receive(u32Addr, (uint8 *)&u32ConflictedIP, sizeof(u32ConflictedIP), 0) == M2M_SUCCESS)
 		{
-			M2M_INFO("Conflicted IP \" %u.%u.%u.%u \" \n",
+			M2M_INFO("Conflicted IP \" %u.%u.%u.%u \" \n\r",
 				BYTE_0(u32ConflictedIP),BYTE_1(u32ConflictedIP),BYTE_2(u32ConflictedIP),BYTE_3(u32ConflictedIP));
 			if (gpfAppWifiCb)
 				gpfAppWifiCb(M2M_WIFI_RESP_IP_CONFLICT, NULL);
@@ -284,13 +284,13 @@ static void m2m_wifi_cb(uint8 u8OpCode, uint16 u16DataSize, uint32 u32Addr)
 					gpfAppMonCb(&strRxPacketInfo, gstrMgmtCtrl.pu8Buf,u16DataSize);
 			}
 		} else {
-			M2M_ERR("Incorrect mon data size %u\n", u16DataSize);
+			M2M_ERR("Incorrect mon data size %u\n\r", u16DataSize);
 		}
 	}
 #endif
 	else
 	{
-		M2M_ERR("REQ Not defined %d\n",u8OpCode);
+		M2M_ERR("REQ Not defined %d\n\r",u8OpCode);
 	}
 }
 
@@ -315,21 +315,21 @@ static sint8 m2m_validate_ap_parameters(CONST tstrM2MAPConfig* pstrM2MAPConfig)
 	/* Check for incoming pointer */
 	if(pstrM2MAPConfig == NULL)
 	{
-		M2M_ERR("INVALID POINTER\n");
+		M2M_ERR("INVALID POINTER\n\r");
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR1;
 	}
 	/* Check for SSID */
 	if((m2m_strlen((uint8 *)pstrM2MAPConfig->au8SSID) <= 0) || (m2m_strlen((uint8 *)pstrM2MAPConfig->au8SSID) >= M2M_MAX_SSID_LEN))
 	{
-		M2M_ERR("INVALID SSID\n");
+		M2M_ERR("INVALID SSID\n\r");
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR1;
 	}
 	/* Check for Channel */
 	if(pstrM2MAPConfig->u8ListenChannel > M2M_WIFI_CH_14 || pstrM2MAPConfig->u8ListenChannel < M2M_WIFI_CH_1)
 	{
-		M2M_ERR("INVALID CH\n");
+		M2M_ERR("INVALID CH\n\r");
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR1;
 	}
@@ -338,7 +338,7 @@ static sint8 m2m_validate_ap_parameters(CONST tstrM2MAPConfig* pstrM2MAPConfig)
 	{
 		if(!(pstrM2MAPConfig->au8DHCPServerIP[2]))
 		{
-			M2M_ERR("INVALID DHCP SERVER IP\n");
+			M2M_ERR("INVALID DHCP SERVER IP\n\r");
 			s8Ret = M2M_ERR_FAIL;
 			goto ERR1;
 		}
@@ -353,7 +353,7 @@ static sint8 m2m_validate_ap_parameters(CONST tstrM2MAPConfig* pstrM2MAPConfig)
 		/* Check for WEP Key index */
 		if((pstrM2MAPConfig->u8KeyIndx <= 0) || (pstrM2MAPConfig->u8KeyIndx > WEP_KEY_MAX_INDEX))
 		{
-			M2M_ERR("INVALID KEY INDEX\n");
+			M2M_ERR("INVALID KEY INDEX\n\r");
 			s8Ret = M2M_ERR_FAIL;
 			goto ERR1;
 		}
@@ -362,14 +362,14 @@ static sint8 m2m_validate_ap_parameters(CONST tstrM2MAPConfig* pstrM2MAPConfig)
 			(pstrM2MAPConfig->u8KeySz != WEP_104_KEY_STRING_SIZE)
 		)
 		{
-			M2M_ERR("INVALID KEY STRING SIZE\n");
+			M2M_ERR("INVALID KEY STRING SIZE\n\r");
 			s8Ret = M2M_ERR_FAIL;
 			goto ERR1;
 		}
 
 		if((m2m_strlen((uint8 *)pstrM2MAPConfig->au8WepKey) <= 0) || (m2m_strlen((uint8 *)pstrM2MAPConfig->au8WepKey) > WEP_104_KEY_STRING_SIZE))
 		{
-			M2M_ERR("INVALID KEY SIZE\n");
+			M2M_ERR("INVALID KEY SIZE\n\r");
 			s8Ret = M2M_ERR_FAIL;
 			goto ERR1;
 		}
@@ -379,14 +379,14 @@ static sint8 m2m_validate_ap_parameters(CONST tstrM2MAPConfig* pstrM2MAPConfig)
 		/* Check for WPA Key size */
 		if(	((pstrM2MAPConfig->u8KeySz + 1) < M2M_MIN_PSK_LEN) || ((pstrM2MAPConfig->u8KeySz + 1) > M2M_MAX_PSK_LEN))
 		{
-			M2M_ERR("INVALID WPA KEY SIZE\n");
+			M2M_ERR("INVALID WPA KEY SIZE\n\r");
 			s8Ret = M2M_ERR_FAIL;
 			goto ERR1;
 		}
 	}
 	else
 	{
-		M2M_ERR("INVALID AUTHENTICATION MODE\n");
+		M2M_ERR("INVALID AUTHENTICATION MODE\n\r");
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR1;
 	}
@@ -400,35 +400,35 @@ static sint8 m2m_validate_scan_options(tstrM2MScanOption* ptstrM2MScanOption)
 	/* Check for incoming pointer */
 	if(ptstrM2MScanOption == NULL)
 	{
-		M2M_ERR("INVALID POINTER\n");
+		M2M_ERR("INVALID POINTER\n\r");
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR;
 	}
 	/* Check for valid No of slots */
 	if(ptstrM2MScanOption->u8NumOfSlot == 0)
 	{
-		M2M_ERR("INVALID No of scan slots! %d\n",ptstrM2MScanOption->u8NumOfSlot);
+		M2M_ERR("INVALID No of scan slots! %d\n\r",ptstrM2MScanOption->u8NumOfSlot);
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR;
 	}
 	/* Check for valid time of slots */
 	if(ptstrM2MScanOption->u8SlotTime < 10 || ptstrM2MScanOption->u8SlotTime > 250)
 	{
-		M2M_ERR("INVALID scan slot time! %d\n",ptstrM2MScanOption->u8SlotTime);
+		M2M_ERR("INVALID scan slot time! %d\n\r",ptstrM2MScanOption->u8SlotTime);
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR;
 	}
 	/* Check for valid No of probe requests per slot */
 	if((ptstrM2MScanOption->u8ProbesPerSlot == 0)||(ptstrM2MScanOption->u8ProbesPerSlot > M2M_SCAN_DEFAULT_NUM_PROBE))
 	{
-		M2M_ERR("INVALID No of probe requests per scan slot %d\n",ptstrM2MScanOption->u8ProbesPerSlot);
+		M2M_ERR("INVALID No of probe requests per scan slot %d\n\r",ptstrM2MScanOption->u8ProbesPerSlot);
 		s8Ret = M2M_ERR_FAIL;
 		goto ERR;
 	}
 	/* Check for valid RSSI threshold */
 	if((ptstrM2MScanOption->s8RssiThresh  < -99) || (ptstrM2MScanOption->s8RssiThresh >= 0))
 	{
-		M2M_ERR("INVALID RSSI threshold %d \n",ptstrM2MScanOption->s8RssiThresh);
+		M2M_ERR("INVALID RSSI threshold %d \n\r",ptstrM2MScanOption->s8RssiThresh);
 		s8Ret = M2M_ERR_FAIL;
 	}
 
@@ -478,14 +478,14 @@ sint8 m2m_wifi_init(tstrWifiInitParam * param)
 
 	ret = nm_get_firmware_full_info(&strtmp);
 
-	printf("Firmware ver   : %u.%u.%u Svnrev %u\n", strtmp.u8FirmwareMajor, strtmp.u8FirmwareMinor, strtmp.u8FirmwarePatch,strtmp.u16FirmwareSvnNum);
-	printf("Firmware Build %s Time %s\n",strtmp.BuildDate,strtmp.BuildTime);
-	printf("Firmware Min driver ver : %u.%u.%u\n", strtmp.u8DriverMajor, strtmp.u8DriverMinor, strtmp.u8DriverPatch);
-	printf("Driver ver: %u.%u.%u\n", M2M_RELEASE_VERSION_MAJOR_NO, M2M_RELEASE_VERSION_MINOR_NO, M2M_RELEASE_VERSION_PATCH_NO);
-	printf("Driver built at %s\t%s\n",__DATE__,__TIME__);
+	printf("Firmware ver   : %u.%u.%u Svnrev %u\n\r", strtmp.u8FirmwareMajor, strtmp.u8FirmwareMinor, strtmp.u8FirmwarePatch,strtmp.u16FirmwareSvnNum);
+	printf("Firmware Build %s Time %s\n\r",strtmp.BuildDate,strtmp.BuildTime);
+	printf("Firmware Min driver ver : %u.%u.%u\n\r", strtmp.u8DriverMajor, strtmp.u8DriverMinor, strtmp.u8DriverPatch);
+	printf("Driver ver: %u.%u.%u\n\r", M2M_RELEASE_VERSION_MAJOR_NO, M2M_RELEASE_VERSION_MINOR_NO, M2M_RELEASE_VERSION_PATCH_NO);
+	printf("Driver built at %s\t%s\n\r",__DATE__,__TIME__);
 	if(M2M_ERR_FW_VER_MISMATCH == ret)
 	{
-		M2M_ERR("Mismatch Firmware Version\n");
+		M2M_ERR("Mismatch Firmware Version\n\r");
 	}
 
 	goto _EXIT0;

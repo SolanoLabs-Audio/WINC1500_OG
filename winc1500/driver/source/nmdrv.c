@@ -295,7 +295,7 @@ sint8 nm_drv_init(void * arg)
 
 	ret = nm_bus_iface_init(NULL);
 	if (M2M_SUCCESS != ret) {
-		M2M_ERR("[nmi start]: fail init bus\n");
+		M2M_ERR("[nmi start]: fail init bus\n\r");
 		goto ERR1;
 	}
 
@@ -307,7 +307,7 @@ sint8 nm_drv_init(void * arg)
 #ifdef NO_HW_CHIP_EN
 	ret = chip_wake();
 	if (M2M_SUCCESS != ret) {
-		M2M_ERR("[nmi start]: fail chip_wakeup\n");
+		M2M_ERR("[nmi start]: fail chip_wakeup\n\r");
 		goto ERR2;
 	}
 	/**
@@ -318,7 +318,7 @@ sint8 nm_drv_init(void * arg)
 		goto ERR2;
 	}
 #endif
-	printf("Chip ID %lx\n", nmi_get_chipid());
+	printf("Chip ID %lx\n\r", nmi_get_chipid());
 #ifdef CONF_WINC_USE_SPI
 	/* Must do this after global reset to set SPI data packet size. */
 	nm_spi_init();
@@ -341,7 +341,7 @@ sint8 nm_drv_init(void * arg)
 
 	ret = enable_interrupts();
 	if (M2M_SUCCESS != ret) {
-		M2M_ERR("failed to enable interrupts..\n");
+		M2M_ERR("failed to enable interrupts..\n\r");
 		goto ERR2;
 	}
 	return ret;
@@ -364,20 +364,20 @@ sint8 nm_drv_deinit(void * arg)
 
 	ret = chip_deinit();
 	if (M2M_SUCCESS != ret) {
-		M2M_ERR("[nmi stop]: chip_deinit fail\n");
+		M2M_ERR("[nmi stop]: chip_deinit fail\n\r");
 		goto ERR1;
 	}
 
 	/* Disable SPI flash to save power when the chip is off */
 	ret = spi_flash_enable(0);
 	if (M2M_SUCCESS != ret) {
-		M2M_ERR("[nmi stop]: SPI flash disable fail\n");
+		M2M_ERR("[nmi stop]: SPI flash disable fail\n\r");
 		goto ERR1;
 	}
 
 	ret = nm_bus_iface_deinit();
 	if (M2M_SUCCESS != ret) {
-		M2M_ERR("[nmi stop]: fail init bus\n");
+		M2M_ERR("[nmi stop]: fail init bus\n\r");
 		goto ERR1;
 	}
 #ifdef CONF_WINC_USE_SPI

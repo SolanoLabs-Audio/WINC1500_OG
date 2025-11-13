@@ -174,7 +174,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   //MX_GPIO_Init();
-  //MX_SPI1_Init();
+  MX_SPI1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 

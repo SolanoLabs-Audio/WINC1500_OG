@@ -259,7 +259,7 @@ nm_bus_init(void *pvinit){
 	hspiWifi.Init.CLKPhase=SPI_PHASE_1EDGE;
 	hspiWifi.Init.NSS=SPI_NSS_SOFT;
 	#ifdef __STM32H7__
-		hspiWifi.Init.BaudRatePrescaler=SPI_BAUDRATEPRESCALER_32;
+		hspiWifi.Init.BaudRatePrescaler=SPI_BAUDRATEPRESCALER_256;
 	#endif
 	hspiWifi.Init.FirstBit=SPI_FIRSTBIT_MSB;
 	hspiWifi.Init.TIMode=SPI_TIMODE_DISABLE;
