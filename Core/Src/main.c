@@ -4,18 +4,9 @@
   * @file           : main.c
   * @brief          : Main program body
   ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
   */
 /* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "spi.h"
@@ -28,274 +19,157 @@
 #include <string.h>
 #include "m2m_wifi.h"
 #include "conf_winc.h"
-
-
-
+#include "socket.h"
 #include "mongoose.h"
+#include "winc_if.h"
+
+
 
 /* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
+// Implementazione di gettimeofday
+int _gettimeofday(struct timeval *tv, void *tzp) {
+    (void)tzp;
+    if (tv) {
+        uint32_t tick = HAL_GetTick();
+        tv->tv_sec = tick / 1000;
+        tv->tv_usec = (tick % 1000) * 1000;
+    }
+    return 0;
+}
 
-/* USER CODE END PTD */
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MPU_Config(void);
 /* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
+static struct mg_mgr mgr;
 
-
-// Custom millis: Usa HAL tick (già disponibile)
-uint64_t mg_millis(void) {
-  return (uint64_t) HAL_GetTick();
+// AGGIUNGI: definisci mg_millis come weak per evitare conflitti
+__attribute__((weak)) uint64_t mg_millis(void) {
+    return (uint64_t)HAL_GetTick();
 }
-
-// Custom random: Usa RNG hardware del tuo H743 (se abilitato; altrimenti fallback)
-// Prima, abilita RNG in .ioc (Pinout > System Core > RNG > Activated)
-//extern RNG_HandleTypeDef hrng;  // Dichiaralo se non ce l'hai (da stm32h7xx_hal_conf.h)
-//void mg_random(void *buf, size_t len) {
-//  if (HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t*)buf) != HAL_OK) {
-//    // Fallback semplice: riempire con timestamp se RNG non pronto
-//    uint32_t *p = (uint32_t *) buf;
-//    for (size_t i = 0; i < (len + 3) / 4; i++) p[i] = HAL_GetTick();
-//  }
-//}
-
-static struct mg_mgr mgr;  // Manager globale
-
-//static void http_handler(struct mg_connection *c, int ev, void *ev_data) {
-//  if (ev == MG_EV_HTTP_MSG) {
-//    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-//    if (mg_http_match_uri(hm, "/")) {
-//      const char *page = "<html><body><h1>Ciao dal tuo STM32H743 + WINC1500!</h1>"
-//                         "<p>AP WiFi funziona. Connesso come client?</p></body></html>";
-//      // Rimuovi 'opts' unused – non serve per reply semplice
-//      mg_http_reply(c, 200, "Content-Type: text/html\r\n", "%s", page);
-//    } else {
-//      mg_http_reply(c, 404, "", "NOT FOUND");
-//    }
-//  }
-//}
-
 
 
 #ifdef __GNUC__
-/* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
-   set to 'Yes') calls __io_putchar() */
 #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
 #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif /* __GNUC__ */
+#endif
+
 extern void isr(void);
 
-
-
-/**
-  * @brief  EXTI line detection callback.
-  * @param  GPIO_Pin: Specifies the port pin connected to corresponding EXTI line.
-  * @retval None
-  */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-
-	if(GPIO_Pin==CONF_WINC_SPI_INT_PIN)
-    	{isr();}
-}
-//
-
-
-
-
-
-/**
- * \brief Callback to get the Wi-Fi status update.
- *
- * \param[in] u8MsgType type of Wi-Fi notification. Possible types are:
- *  - [M2M_WIFI_RESP_CON_STATE_CHANGED](@ref M2M_WIFI_RESP_CON_STATE_CHANGED)
- *  - [M2M_WIFI_REQ_DHCP_CONF](@ref M2M_WIFI_REQ_DHCP_CONF)
- * \param[in] pvMsg A pointer to a buffer containing the notification parameters
- * (if any). It should be casted to the correct data type corresponding to the
- * notification type.
- */
-static void wifi_cb(uint8_t u8MsgType, void *pvMsg)
-{
-	switch (u8MsgType) {
-	case M2M_WIFI_RESP_CON_STATE_CHANGED:
-	{
-		tstrM2mWifiStateChanged *pstrWifiState = (tstrM2mWifiStateChanged *)pvMsg;
-		if (pstrWifiState->u8CurrState == M2M_WIFI_CONNECTED) {
-		} else if (pstrWifiState->u8CurrState == M2M_WIFI_DISCONNECTED) {
-			printf("Station disconnected\r\n");
-		}
-
-		break;
-	}
-
-	case M2M_WIFI_REQ_DHCP_CONF:
-	{
-		uint8_t *pu8IPAddress = (uint8_t *)pvMsg;
-		printf("Station connected\r\n");
-		printf("Station IP is %u.%u.%u.%u\r\n",
-				pu8IPAddress[0], pu8IPAddress[1], pu8IPAddress[2], pu8IPAddress[3]);
-		break;
-	}
-
-	default:
-	{
-		break;
-	}
-	}
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+    if (GPIO_Pin == CONF_WINC_SPI_INT_PIN) {
+        isr();
+    }
 }
 
+static void wifi_cb(uint8_t u8MsgType, void *pvMsg) {
+    switch (u8MsgType) {
+        case M2M_WIFI_RESP_CON_STATE_CHANGED: {
+            tstrM2mWifiStateChanged *pstrWifiState = (tstrM2mWifiStateChanged *)pvMsg;
+            if (pstrWifiState->u8CurrState == M2M_WIFI_CONNECTED) {
+                printf("WiFi: Station connected\n");
+            } else if (pstrWifiState->u8CurrState == M2M_WIFI_DISCONNECTED) {
+                printf("WiFi: Station disconnected\n");
+            }
+            break;
+        }
+        case M2M_WIFI_REQ_DHCP_CONF: {
+            uint8_t *pu8IPAddress = (uint8_t *)pvMsg;
+            printf("WiFi: DHCP configured - IP: %u.%u.%u.%u\n",
+                   pu8IPAddress[0], pu8IPAddress[1], pu8IPAddress[2], pu8IPAddress[3]);
+            break;
+        }
+        default:
+            break;
+    }
+}
 
-PUTCHAR_PROTOTYPE
-{
-  /* Place your implementation of fputc here */
-  /* e.g. write a character to the USART3 and Loop until the end of transmission */
-  HAL_UART_Transmit(&huart3,(uint8_t *)&ch,1,0xFFFF);
+PUTCHAR_PROTOTYPE {
+    HAL_UART_Transmit(&huart3, (uint8_t *)&ch, 1, 0xFFFF);
+    return ch;
+}
 
-  return ch;
+int main(void) {
+    tstrWifiInitParam param;
+    tstrM2MAPConfig strM2MAPConfig;
+    int8_t ret;
+
+    // Inizializzazione HAL
+    MPU_Config();
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_SPI1_Init();
+    MX_USART3_UART_Init();
+
+    printf("\r\n--- STM32H7 + WINC1500 + Mongoose ---\r\n");
+
+    // Inizializza WINC1500
+    nm_bsp_init();
+    registerSocketCallback(winc_sock_cb, NULL);
+
+    memset(&param, 0, sizeof(param));
+    param.pfAppWifiCb = wifi_cb;
+    ret = m2m_wifi_init(&param);
+    if (ret != M2M_SUCCESS) {
+        printf("m2m_wifi_init failed: %d\n", ret);
+        while(1);
+    }
+
+    // Configura AP mode
+    memset(&strM2MAPConfig, 0, sizeof(strM2MAPConfig));
+    strcpy((char *)&strM2MAPConfig.au8SSID, MAIN_WLAN_SSID);
+    strM2MAPConfig.u8ListenChannel = MAIN_WLAN_CHANNEL;
+    strM2MAPConfig.u8SecType = MAIN_WLAN_AUTH;
+    strM2MAPConfig.au8DHCPServerIP[0] = 192;
+    strM2MAPConfig.au8DHCPServerIP[1] = 168;
+    strM2MAPConfig.au8DHCPServerIP[2] = 1;
+    strM2MAPConfig.au8DHCPServerIP[3] = 1;
+
+    ret = m2m_wifi_enable_ap(&strM2MAPConfig);
+    if (ret != M2M_SUCCESS) {
+        printf("m2m_wifi_enable_ap failed: %d\n", ret);
+        while(1);
+    }
+
+    printf("AP mode started: %s\n", MAIN_WLAN_SSID);
+    printf("Connect to http://192.168.1.1\n");
+
+    // Inizializza Mongoose
+    mg_mgr_init(&mgr);
+    winc_if_init(&mgr);
+
+    // Crea server HTTP
+    if (!winc_create_http_server(80)) {
+        printf("Failed to create HTTP server\n");
+        while(1);
+    }
+
+    printf("HTTP server started on port 80\n");
+
+    // Loop principale
+    while (1) {
+        winc_if_poll(&mgr, 10);
+        mg_mgr_poll(&mgr, 0);  // Timeout 0 - solo processing interno
+    }
 }
 
 
-/* USER CODE END 0 */
-
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
-int main(void)
-{
-
-  /* USER CODE BEGIN 1 */
-	tstrWifiInitParam param;
-	tstrM2MAPConfig strM2MAPConfig;
-	int8_t ret;
-  /* USER CODE END 1 */
-
-  /* MPU Configuration--------------------------------------------------------*/
-  MPU_Config();
-
-  /* MCU Configuration--------------------------------------------------------*/
-
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
-
-  /* USER CODE BEGIN Init */
 
 
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  //MX_GPIO_Init();
-  MX_SPI1_Init();
-  MX_USART3_UART_Init();
-  /* USER CODE BEGIN 2 */
-
-  //wifi_driver_init();  // Dal Passo 2
-
-  //mg_mgr_init(&mgr);  // Init Mongoose
-  //mgr.ifp = &wifi_if;  // Collega driver WiFi
-
-  //mg_http_listen(&mgr, "http://0.0.0.0:80", http_handler, NULL);  // Ora signature matches
 
 
-  /* Initialize the BSP. */
-  nm_bsp_init();
 
-  /* Initialize Wi-Fi parameters structure. */
-  memset((uint8_t *)&param, 0, sizeof(tstrWifiInitParam));
 
-  /* Initialize Wi-Fi driver with data and status callbacks. */
-  param.pfAppWifiCb = wifi_cb;
-  ret = m2m_wifi_init(&param);
-  if (M2M_SUCCESS != ret) {
-	  printf("main: m2m_wifi_init call error!(%d)\r\n", ret);
-	  while (1) {
-	  }
-  }
 
-	/* Initialize AP mode parameters structure with SSID, channel and OPEN security type. */
-	memset(&strM2MAPConfig, 0x00, sizeof(tstrM2MAPConfig));
-	strcpy((char *)&strM2MAPConfig.au8SSID, MAIN_WLAN_SSID);
-	strM2MAPConfig.u8ListenChannel = MAIN_WLAN_CHANNEL;
-	strM2MAPConfig.u8SecType = MAIN_WLAN_AUTH;
 
-	strM2MAPConfig.au8DHCPServerIP[0] = 192;
-	strM2MAPConfig.au8DHCPServerIP[1] = 168;
-	strM2MAPConfig.au8DHCPServerIP[2] = 1;
-	strM2MAPConfig.au8DHCPServerIP[3] = 1;
-
-#if USE_WEP
-	strcpy((char *)&strM2MAPConfig.au8WepKey, MAIN_WLAN_WEP_KEY);
-	strM2MAPConfig.u8KeySz = strlen(MAIN_WLAN_WEP_KEY);
-	strM2MAPConfig.u8KeyIndx = MAIN_WLAN_WEP_KEY_INDEX;
-#endif
-
-	/* Bring up AP mode with parameters structure. */
-	ret = m2m_wifi_enable_ap(&strM2MAPConfig);
-	if (M2M_SUCCESS != ret) {
-		printf("main: m2m_wifi_enable_ap call error!\r\n");
-		while (1) {
-		}
-	}
-
-	printf("AP mode started. You can connect to %s.\r\n", (char *)MAIN_WLAN_SSID);
-
-  while(1)
-  {
-	  m2m_wifi_handle_events(NULL);
-
-	  mg_mgr_poll(&mgr, 100);  // Poll Mongoose (100ms timeout)
-	  //wifi_if_poll(&wifi_if, &mgr);  // Poll WiFi per pacchetti
-	  // Tuo codice esistente per connect/disconnect (es. HAL_Delay(10))
-	  HAL_Delay(10);
-
-  }
-
-#if 0
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-  }
-#endif
-  /* USER CODE END 3 */
-}
 
 /**
   * @brief System Clock Configuration
@@ -428,7 +302,7 @@ void Error_Handler(void)
 #ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
+  * where the assert_param error has occurred.
   * @param  file: pointer to the source file name
   * @param  line: assert_param error line source number
   * @retval None
@@ -441,19 +315,5 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

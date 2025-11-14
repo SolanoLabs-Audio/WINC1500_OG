@@ -22,6 +22,7 @@
 
 
 
+
 #ifdef MG_ENABLE_LINES
 #line 1 "src/base64.c"
 #endif

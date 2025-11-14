@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>     /* Included for uint_t */
-
+#include "main.h"
 
 #ifdef __STM32H7__
 	#include "stm32H7xx_hal.h"
