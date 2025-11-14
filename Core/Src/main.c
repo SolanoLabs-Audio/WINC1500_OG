@@ -28,6 +28,11 @@
 #include <string.h>
 #include "m2m_wifi.h"
 #include "conf_winc.h"
+
+
+
+#include "mongoose.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,6 +65,42 @@ static void MPU_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
+// Custom millis: Usa HAL tick (già disponibile)
+uint64_t mg_millis(void) {
+  return (uint64_t) HAL_GetTick();
+}
+
+// Custom random: Usa RNG hardware del tuo H743 (se abilitato; altrimenti fallback)
+// Prima, abilita RNG in .ioc (Pinout > System Core > RNG > Activated)
+//extern RNG_HandleTypeDef hrng;  // Dichiaralo se non ce l'hai (da stm32h7xx_hal_conf.h)
+//void mg_random(void *buf, size_t len) {
+//  if (HAL_RNG_GenerateRandomNumber(&hrng, (uint32_t*)buf) != HAL_OK) {
+//    // Fallback semplice: riempire con timestamp se RNG non pronto
+//    uint32_t *p = (uint32_t *) buf;
+//    for (size_t i = 0; i < (len + 3) / 4; i++) p[i] = HAL_GetTick();
+//  }
+//}
+
+static struct mg_mgr mgr;  // Manager globale
+
+//static void http_handler(struct mg_connection *c, int ev, void *ev_data) {
+//  if (ev == MG_EV_HTTP_MSG) {
+//    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+//    if (mg_http_match_uri(hm, "/")) {
+//      const char *page = "<html><body><h1>Ciao dal tuo STM32H743 + WINC1500!</h1>"
+//                         "<p>AP WiFi funziona. Connesso come client?</p></body></html>";
+//      // Rimuovi 'opts' unused – non serve per reply semplice
+//      mg_http_reply(c, 200, "Content-Type: text/html\r\n", "%s", page);
+//    } else {
+//      mg_http_reply(c, 404, "", "NOT FOUND");
+//    }
+//  }
+//}
+
+
+
 #ifdef __GNUC__
 /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -163,6 +204,7 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -177,6 +219,13 @@ int main(void)
   MX_SPI1_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  //wifi_driver_init();  // Dal Passo 2
+
+  //mg_mgr_init(&mgr);  // Init Mongoose
+  //mgr.ifp = &wifi_if;  // Collega driver WiFi
+
+  //mg_http_listen(&mgr, "http://0.0.0.0:80", http_handler, NULL);  // Ora signature matches
 
 
   /* Initialize the BSP. */
@@ -220,9 +269,15 @@ int main(void)
 	}
 
 	printf("AP mode started. You can connect to %s.\r\n", (char *)MAIN_WLAN_SSID);
+
   while(1)
   {
 	  m2m_wifi_handle_events(NULL);
+
+	  mg_mgr_poll(&mgr, 100);  // Poll Mongoose (100ms timeout)
+	  //wifi_if_poll(&wifi_if, &mgr);  // Poll WiFi per pacchetti
+	  // Tuo codice esistente per connect/disconnect (es. HAL_Delay(10))
+	  HAL_Delay(10);
 
   }
 
@@ -386,3 +441,19 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
